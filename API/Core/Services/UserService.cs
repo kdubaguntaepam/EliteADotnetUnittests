@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace AutomationFramwork.API.Core.Services
 {
-    public class UserService : IUserService
+    public class UserService : IUserServiceSecurity
     {
         private readonly IUserApiClient _userApiClient;
 

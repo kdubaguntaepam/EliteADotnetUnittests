@@ -2,7 +2,7 @@
 
 namespace AutomationFramwork.API.Core.Interfaces
 {
-    public interface IUserService
+    public interface IUserServiceSecurity
     {
         Task<User> GetUserAsync(int id);
         Task<User> CreateUserAsync(User user);
