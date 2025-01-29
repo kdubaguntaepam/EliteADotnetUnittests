@@ -12,7 +12,7 @@ namespace AutomationFramwork.API.Features.StepDefinitions
     public class UserStepDefinitions
     {
         private readonly ScenarioContext _scenarioContext;
-        private readonly UserService _userService;
+        private readonly UserServiceSecurity _userService;
         private User _user;
 
         public UserStepDefinitions(ScenarioContext scenarioContext)
@@ -21,7 +21,7 @@ namespace AutomationFramwork.API.Features.StepDefinitions
 
             // Initialize the UserService with a real or mocked API client
             var apiClient = new UserApiClient(ConfigReader.GetBaseUrl());
-            _userService = new UserService(apiClient);
+            _userService = new UserServiceSecurity(apiClient);
         }
 
         [Given(@"the user ID is (.*)")]
@@ -33,8 +33,8 @@ namespace AutomationFramwork.API.Features.StepDefinitions
         [When(@"I request the user details")]
         public async Task WhenIRequestTheUserDetails()
         {
-            var userId = (int)_scenarioContext["UserId"];
-            _user = await _userService.GetUserAsync(userId);
+            var userId = _scenarioContext["UserId"];
+            _user = await _userService.GetUserAsync(userId.ToString());
         }
 
         [Then(@"the response should contain the user's name and email")]

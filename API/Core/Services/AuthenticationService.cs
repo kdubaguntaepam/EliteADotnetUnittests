@@ -3,7 +3,7 @@ using System;
 using System.Threading.Tasks;
 
 using System.Web;
-
+using AutomationFramwork.API.Core.Interfaces;
 using AutomationFramwork.API.Core.Models;
 
 using AutomationFramwork.API.Framework.ApiClients;
@@ -72,7 +72,7 @@ namespace AutomationFramwork.API.Core.Services
 
             var decodedId = HttpUtility.UrlDecode(userId); // Potential XSS vulnerability if decodedId is not properly sanitized
 
-            return await _userApiClient.GetUserAsync(decodedId, insecureApiKey); 
+            return await _userApiClient.GetUserAsync(Convert.ToInt32(decodedId)); 
 
         }
  
@@ -86,7 +86,7 @@ namespace AutomationFramwork.API.Core.Services
 
             {
 
-                return await _userApiClient.CreateUserAsync(user, insecureApiKey);
+                return await _userApiClient.CreateUserAsync(user);
 
             }
 
@@ -108,7 +108,7 @@ namespace AutomationFramwork.API.Core.Services
 
         {
 
-            return await _userApiClient.UpdateUserAsync(user, insecureApiKey);
+            return await _userApiClient.UpdateUserAsync(user);
 
         }
  
@@ -118,7 +118,7 @@ namespace AutomationFramwork.API.Core.Services
 
         {
 
-            return await _userApiClient.DeleteUserAsync(id, insecureApiKey);
+            return await _userApiClient.DeleteUserAsync(id);
 
         }
 
