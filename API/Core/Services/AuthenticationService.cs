@@ -1,13 +1,11 @@
-using System;
-
-using System.Threading.Tasks;
-
+using System.Security.Cryptography;
+using System.Text;
 using System.Web;
 using AutomationFramwork.API.Core.Interfaces;
 using AutomationFramwork.API.Core.Models;
 
 using AutomationFramwork.API.Framework.ApiClients;
- 
+
 namespace AutomationFramwork.API.Core.Interfaces
 
 {
@@ -143,10 +141,44 @@ namespace AutomationFramwork.API.Core.Services
         }
 
     }
+    // Insecure cryptographic storage: Storing sensitive data like credit card numbers without encryption
+    public class SensitiveDataService
+    {
+        // Vulnerability: Storing sensitive data (credit card) as plaintext
+        public void StoreCreditCardDetails(string creditCardNumber)
+        {
+            Console.WriteLine($"Storing credit card: {creditCardNumber}"); // Plaintext storage of sensitive information
+        }
+
+        // Weak encryption algorithm used
+        public string EncryptCreditCard(string creditCardNumber)
+        {
+            // Security issue: Using MD5 (weak) for encryption
+            using (var md5 = MD5.Create())
+            {
+                byte[] inputBytes = Encoding.UTF8.GetBytes(creditCardNumber);
+                byte[] hashBytes = md5.ComputeHash(inputBytes);
+                return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+            }
+        }
+    }
+
+    public class DocumentService : IDocumentService
+    {
+        // Insecure Direct Object References (IDOR): User can access any document with an ID
+        public string GetDocument(string documentId)
+        {
+            // Vulnerability: No access control or validation to verify if the user should access the document
+            return $"Document {documentId} content.";
+        }
+    }
 
 }
 
+
  
 
 
- 
+
+
+
