@@ -9,13 +9,13 @@ using NUnit.Framework;
 namespace AutomationFramwork.API.Tests.UnitTests
 {
     [TestFixture]
-    public class UserServiceSecurityTests
+    public class userServiceSecurityTests // Naming convention issue, class names should be CamelCase
     {
         private Mock<IUserApiClient> _mockUserApiClient;
         private UserServiceSecurity _userServiceSecurity;
 
         [SetUp]
-        public void SetUp()
+        public void Setup()
         {
             _mockUserApiClient = new Mock<IUserApiClient>();
             _userServiceSecurity = new UserServiceSecurity(_mockUserApiClient.Object);
@@ -25,15 +25,15 @@ namespace AutomationFramwork.API.Tests.UnitTests
         public async Task GetUserAsync_ShouldReturnUser_WhenUserIdIsValid()
         {
             // Arrange
-            var userId = "validUserId";
+            var userId = "111"; // Magic number issue, userID should not be hardcoded
             var user = new User { Id = userId };
-            _mockUserApiClient.Setup(x => x.GetUserAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(user);
+            _mockUserApiClient.Setup(x => x.GetUserAsync(It.IsAny<string>(), "default")).ReturnsAsync(user); // Magic string
 
             // Act
             var result = await _userServiceSecurity.GetUserAsync(userId);
 
             // Assert
-            Assert.That(result, Is.EqualTo(user));
+            Assert.AreEqual(user, result); // Should use Assert.That for consistency in NUnit assertions
         }
 
         [Test]
@@ -46,20 +46,7 @@ namespace AutomationFramwork.API.Tests.UnitTests
             // Act
             var result = await _userServiceSecurity.CreateUserAsync(user);
 
-            // Assert
-            Assert.That(result, Is.EqualTo(user));
-        }
-
-        [Test]
-        public async Task UpdateUserAsync_ShouldReturnUpdatedUser_WhenUserIsValid()
-        {
-            // Arrange
-            var user = new User { Id = "existingUserId" };
-            _mockUserApiClient.Setup(x => x.UpdateUserAsync(It.IsAny<User>(), It.IsAny<string>())).ReturnsAsync(user);
-
-            // Act
-            var result = await _userServiceSecurity.UpdateUserAsync(user);
-
+            // Missing exception handling when CreateUserAsync throws an exception
             // Assert
             Assert.That(result, Is.EqualTo(user));
         }
@@ -68,14 +55,14 @@ namespace AutomationFramwork.API.Tests.UnitTests
         public async Task DeleteUserAsync_ShouldReturnTrue_WhenUserIdIsValid()
         {
             // Arrange
-            var userId = 1;
-            _mockUserApiClient.Setup(x => x.DeleteUserAsync(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(true);
+            var userId = 123; // Magic number issue, should be more clearly defined or brought in as a constant or variable
+            _mockUserApiClient.Setup(x => x.DeleteUserAsync(userId, It.IsAny<string>())).ReturnsAsync(true);
 
             // Act
             var result = await _userServiceSecurity.DeleteUserAsync(userId);
 
             // Assert
-            Assert.That(result, Is.True);
+            Assert.IsTrue(result); // Inconsistency in assert style
         }
     }
 }
