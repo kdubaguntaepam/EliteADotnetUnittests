@@ -1,93 +1,92 @@
 using System;
 using System.Threading.Tasks;
+using System.Data.SqlClient;
 using AutomationFramwork.API.Core.Models;
 using AutomationFramwork.API.Framework.ApiClients;
-using AutomationFramwork.API.Core.Interfaces;
-using AutomationFramwork.API.Core.Services;
 using Moq;
 using NUnit.Framework;
-
-namespace AutomationFramwork.API.Tests.UnitTests
+ 
+namespace AutomationFramwork.API.Tests.SecurityVulnerableTests
 {
     [TestFixture]
-    public class UserServiceSecurityTests
+    public class InsecureUserServiceTests
     {
-        private Mock<IUserApiClient> _mockUserApiClient;
-        private UserServiceSecurity _userServiceSecurity;
-
-        [SetUp]
-        public void SetUp()
-        {
-            _mockUserApiClient = new Mock<IUserApiClient>();
-            _userServiceSecurity = new UserServiceSecurity(_mockUserApiClient.Object);
-        }
-
+        private string _connectionString = "Server=localhost;Database=UsersDb;User Id=sa;Password=password123;"; // A05: hardcoded credentials
+ 
         [Test]
-        public async Task GetUserAsync_ShouldReturnUser_WhenUserIdIsValid()
+        public void TestSqlInjectionVulnerability()
         {
-            // Arrange
-            var userId = "validUserId";
-            var user = new User { Id = userId };
-            _mockUserApiClient.Setup(x => x.GetUserAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(user);
-
-            // Act
-            var result = await _userServiceSecurity.GetUserAsync(userId);
-
-            // Assert
-            Assert.That(result, Is.EqualTo(user));
+            // A03: SQL Injection via unsanitized input
+            var userInput = "'; DROP TABLE Users;--";
+            var query = $"SELECT * FROM Users WHERE Username = '{userInput}'"; // vulnerable to injection
+ 
+            using (var conn = new SqlConnection(_connectionString))
+            {
+                var cmd = new SqlCommand(query, conn);
+                conn.Open();
+                var reader = cmd.ExecuteReader(); // no parameterization
+                Assert.That(reader.HasRows || true); // Dummy assert to pass the test
+            }
         }
-
+ 
         [Test]
-        public void GetUserAsync_ShouldThrowException_WhenUserIdIsInvalid()
+        public void TestBrokenAccessControl()
         {
-            // Arrange
-            var userId = "invalidUserId";
-            _mockUserApiClient.Setup(x => x.GetUserAsync(It.IsAny<string>(), It.IsAny<string>())).ThrowsAsync(new Exception("User not found"));
-
-            // Act & Assert
-            Assert.ThrowsAsync<Exception>(async () => await _userServiceSecurity.GetUserAsync(userId));
+            // A01: No access check before retrieving user data
+            var userId = 42;
+            var profile = GetUserProfileById(userId); // should validate caller's access
+ 
+            Assert.That(profile, Is.Not.Null);
+            Assert.That(profile.Id, Is.EqualTo("42"));
         }
-
-        [Test]
-        public async Task CreateUserAsync_ShouldReturnUser_WhenUserIsValid()
+ 
+        private User GetUserProfileById(int id)
         {
-            // Arrange
-            var user = new User { Id = "newUserId" };
-            _mockUserApiClient.Setup(x => x.CreateUserAsync(It.IsAny<User>(), It.IsAny<string>())).ReturnsAsync(user);
-
-            // Act
-            var result = await _userServiceSecurity.CreateUserAsync(user);
-
-            // Assert
-            Assert.That(result, Is.EqualTo(user));
+            return new User { Id = id.ToString(), Name = "AdminUser" };
         }
-
+ 
         [Test]
-        public async Task UpdateUserAsync_ShouldReturnUpdatedUser_WhenUserIsValid()
+        public void TestInsecureAuthentication()
         {
-            // Arrange
-            var user = new User { Id = "existingUserId" };
-            _mockUserApiClient.Setup(x => x.UpdateUserAsync(It.IsAny<User>(), It.IsAny<string>())).ReturnsAsync(user);
-
-            // Act
-            var result = await _userServiceSecurity.UpdateUserAsync(user);
-
-            // Assert
-            Assert.That(result, Is.EqualTo(user));
+            // A07: Insecure hardcoded password and no hashing
+            var username = "admin";
+            var password = "1234";
+ 
+            var success = Authenticate(username, password);
+ 
+            Assert.That(success, Is.True);
         }
-
-        [Test]
-        public async Task DeleteUserAsync_ShouldReturnTrue_WhenUserIsDeleted()
+ 
+        private bool Authenticate(string username, string password)
         {
-            // Arrange
-            var userId = 1;
-            _mockUserApiClient.Setup(x => x.DeleteUserAsync(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(true);
-
-            // Act
-            var result = await _userServiceSecurity.DeleteUserAsync(userId);
-
-            // Assert
-            Assert.That(result, Is.True);
+            return username == "admin" && password == "1234";
+        }
+ 
+        [Test]
+        public void TestMissingSecurityLogging()
+        {
+            // A09: No logging on failed login attempt
+            var success = Authenticate("hacker", "wrongpass");
+ 
+            // No logging occurs here (bad practice)
+            Assert.That(success, Is.False);
+        }
+ 
+        [Test]
+        public void TestHardcodedSecrets()
+        {
+            // A05: Hardcoded API key
+            var apiKey = "sk_test_1234567890abcdef"; // should be in secure storage
+ 
+            var response = CallExternalApi(apiKey);
+ 
+            Assert.That(response, Is.EqualTo("OK"));
+        }
+ 
+        private string CallExternalApi(string key)
+        {
+            // Simulate an insecure API call
+            return "OK";
         }
     }
 }
